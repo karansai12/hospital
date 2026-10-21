@@ -6,10 +6,62 @@ datasource db {
   provider = "postgresql"
 }
 
-// Example starter model (or paste your hospital models here)
+enum Role {
+  PATIENT
+  STAFF
+  DOCTOR
+  ADMIN
+}
+
+enum HospitalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id        String   @id @default(uuid())
-  email     String   @unique
+  phone     String   @unique
   name      String?
+  email     String?  @unique
+  role      Role     @default(PATIENT)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Hospital {
+  id        String         @id @default(uuid())
+  name      String
+  slug      String         @unique
+  city      String
+  state     String
+  address   String
+  phone     String
+  status    HospitalStatus @default(PENDING)
+  doctors   Doctor[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([city])
+}
+
+model Doctor {
+  id              String      @id @default(uuid())
+  hospitalId      String
+  hospital        Hospital    @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  name            String
+  qualification   String?
+  experienceYears Int?
+  isActive        Boolean     @default(true)
+  specialties     Specialty[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([hospitalId])
+}
+
+model Specialty {
+  id      String   @id @default(uuid())
+  name    String   @unique
+  doctors Doctor[]
 }
