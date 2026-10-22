@@ -1,15 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-
-
 const HomePage = () => {
+    
     return (
         <header>
             <h1>Welcome to My App</h1>
-            <Button className="bg-white hover:bg-gray-200 text-black">
-                Login
-            </Button>
+            <p>This is the home page of my Next.js application. Login or Signup to get started.</p>
         </header>
     )
 }
