@@ -19,6 +19,14 @@ enum HospitalStatus {
   REJECTED
 }
 
+enum AppointmentStatus {
+  BOOKED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -26,6 +34,7 @@ model User {
   name         String?
   phone        String?  @unique
   role         Role     @default(PATIENT)
+  appointments Appointment[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -55,6 +64,7 @@ model Doctor {
   experienceYears Int?
   isActive        Boolean     @default(true)
   specialties     Specialty[]
+  appointments    Appointment[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -65,4 +75,21 @@ model Specialty {
   id      String   @id @default(uuid())
   name    String   @unique
   doctors Doctor[]
+}
+
+model Appointment {
+  id        String            @id @default(uuid())
+  patientId String
+  patient   User              @relation(fields: [patientId], references: [id])
+  doctorId  String
+  doctor    Doctor            @relation(fields: [doctorId], references: [id])
+  slotStart DateTime
+  slotEnd   DateTime
+  status    AppointmentStatus @default(BOOKED)
+  reason    String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([patientId])
+  @@index([doctorId, slotStart])
 }
