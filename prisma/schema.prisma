@@ -34,6 +34,7 @@ model User {
   name         String?
   phone        String?  @unique
   role         Role     @default(PATIENT)
+  requestedRole Role?
   appointments Appointment[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -20,6 +20,7 @@ import { Eye, EyeOff } from "lucide-react"
 type SignupFormValues = {
     name: string
     email: string
+    requestedRole: "PATIENT" | "DOCTOR" | "STAFF"
     password: string
     confirmPassword: string
 }
@@ -43,6 +44,7 @@ export function Signup() {
                 body: JSON.stringify({
                     name: values.name,
                     email: values.email,
+                    requestedRole: values.requestedRole,
                     password: values.password,
                 }),
             })
@@ -110,6 +112,20 @@ export function Signup() {
                                 })}
                             />
                             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="requested-role">Role</Label>
+                            <select
+                                id="requested-role"
+                                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                                {...register("requestedRole", { required: "Please select a role" })}
+                            >
+                                <option value="PATIENT">Patient</option>
+                                <option value="DOCTOR">Doctor</option>
+                                <option value="STAFF">Staff</option>
+                            </select>
+                            <p className="text-sm text-muted-foreground">Doctor and staff access requires approval.</p>
+                            {errors.requestedRole && <p className="text-sm text-destructive">{errors.requestedRole.message}</p>}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="password">Password</Label>
