@@ -28,16 +28,17 @@ enum AppointmentStatus {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  name         String?
-  phone        String?  @unique
-  role         Role     @default(PATIENT)
+  id            String        @id @default(uuid())
+  email         String        @unique
+  passwordHash  String
+  name          String?
+  phone         String?       @unique
+  role          Role          @default(PATIENT)
   requestedRole Role?
-  appointments Appointment[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  appointments  Appointment[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  doctorProfile Doctor?
 }
 
 model Hospital {
@@ -57,17 +58,19 @@ model Hospital {
 }
 
 model Doctor {
-  id              String      @id @default(uuid())
+  id              String        @id @default(uuid())
   hospitalId      String
-  hospital        Hospital    @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  hospital        Hospital      @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   name            String
   qualification   String?
   experienceYears Int?
-  isActive        Boolean     @default(true)
+  isActive        Boolean       @default(true)
   specialties     Specialty[]
   appointments    Appointment[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  userId          String?       @unique
+  user            User?         @relation(fields: [userId], references: [id])
 
   @@index([hospitalId])
 }

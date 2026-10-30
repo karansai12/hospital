@@ -12,8 +12,18 @@ const plusDays = (n: number) =>
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
 
-export function AppointmentForm({ doctorId }: { doctorId: string }) {
+type DoctorOption = { id: string; name: string; hospitalName: string };
+
+export function AppointmentForm({
+  doctorId,
+  doctors = [],
+}: {
+  doctorId?: string;
+  doctors?: DoctorOption[];
+}) {
   const router = useRouter();
+  const [selectedDoctorId, setSelectedDoctorId] = useState(doctorId ?? "");
+  const activeDoctorId = doctorId ?? selectedDoctorId;
   const [date, setDate] = useState(today());
   const [slots, setSlots] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -27,26 +37,28 @@ export function AppointmentForm({ doctorId }: { doctorId: string }) {
     setLoadingSlots(true);
     setSelected(null);
     setError(null);
-    const res = await fetch(`/api/doctors/${doctorId}/slots?date=${forDate}`);
+    const res = await fetch(`/api/doctors/${activeDoctorId}/slots?date=${forDate}`);
     const data = await res.json().catch(() => ({}));
     setSlots(res.ok ? data.slots : []);
     setLoadingSlots(false);
   }
 
   useEffect(() => {
-    loadSlots(date);
+    if (!activeDoctorId) return;
+    const timer = window.setTimeout(() => loadSlots(date), 0);
+    return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, doctorId]);
+  }, [date, activeDoctorId]);
 
   async function book() {
     if (!selected) return;
     setSubmitting(true);
     setError(null);
 
-    const res = await fetch("/api/appointments", {
+    const res = await fetch("/api/auth/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ doctorId, slotStart: selected, reason: reason || undefined }),
+      body: JSON.stringify({ doctorId: activeDoctorId, slotStart: selected, reason: reason || undefined }),
     });
     const data = await res.json().catch(() => ({}));
     setSubmitting(false);
@@ -74,6 +86,28 @@ export function AppointmentForm({ doctorId }: { doctorId: string }) {
 
   return (
     <div className="space-y-4">
+      {doctors.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="doctor">Choose a doctor</Label>
+          <select
+            id="doctor"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            value={selectedDoctorId}
+            onChange={(event) => {
+              setSelectedDoctorId(event.target.value);
+              setSlots([]);
+              setSelected(null);
+            }}
+          >
+            <option value="">Select a doctor</option>
+            {doctors.map((doctor) => (
+              <option key={doctor.id} value={doctor.id}>
+                {doctor.name} · {doctor.hospitalName}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="date">Choose a date</Label>
         <Input id="date" type="date" value={date} min={today()} max={plusDays(30)}
