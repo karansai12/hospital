@@ -1,10 +1,18 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { AppointmentForm } from "@/app/appointmentForm";
-import { Suspense } from "react";
 
-export default async function DashboardPage() {
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<main className="p-8">Loading...</main>}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+async function DashboardContent() {
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -49,9 +57,7 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    
     <main className="mx-auto w-full max-w-3xl space-y-8 p-6">
-    <Suspense>
       <header>
         <h1 className="text-2xl font-semibold">Welcome, {user.name}</h1>
         <p className="text-sm text-muted-foreground">Book an appointment with an available doctor.</p>
@@ -80,13 +86,16 @@ export default async function DashboardPage() {
           <ul className="divide-y rounded-md border">
             {appointments.map((appointment) => (
               <li key={appointment.id} className="space-y-1 p-4">
-                <p className="font-medium">{appointment.doctor.name} · {appointment.doctor.hospital.name}</p>
+                <p className="font-medium">
+                  {appointment.doctor.name} · {appointment.doctor.hospital.name}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {appointment.slotStart.toLocaleString("en-IN", {
                     dateStyle: "full",
                     timeStyle: "short",
                     timeZone: "Asia/Kolkata",
-                  })} · {appointment.status.replaceAll("_", " ")}
+                  })}{" "}
+                  · {appointment.status.replaceAll("_", " ")}
                 </p>
                 {appointment.reason && <p className="text-sm">Reason: {appointment.reason}</p>}
               </li>
@@ -94,11 +103,6 @@ export default async function DashboardPage() {
           </ul>
         )}
       </section>
-      </Suspense>
     </main>
   );
-}
-
-async function DashboardContent() {
-  const session = await getSession()
 }
