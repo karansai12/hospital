@@ -26,23 +26,25 @@ async function DoctorContent({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <main className="mx-auto max-w-xl space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{doctor.name}</h1>
-        <p className="text-sm text-muted-foreground">
-          {doctor.specialties.map((s) => s.name).join(", ")}
-          {doctor.qualification ? ` · ${doctor.qualification}` : ""}
-        </p>
-        <p className="text-sm">{doctor.hospital.name}, {doctor.hospital.city}</p>
-      </div>
+      <Suspense>
+        <div>
+          <h1 className="text-2xl font-semibold">{doctor.name}</h1>
+          <p className="text-sm text-muted-foreground">
+            {doctor.specialties.map((s) => s.name).join(", ")}
+            {doctor.qualification ? ` · ${doctor.qualification}` : ""}
+          </p>
+          <p className="text-sm">{doctor.hospital.name}, {doctor.hospital.city}</p>
+        </div>
 
-      {session ? (
-        <AppointmentForm doctorId={doctor.id} />
-      ) : (
-        <p className="rounded-lg border p-4 text-sm">
-          <Link href={`/login?next=/doctors/${doctor.id}`} className="underline">Log in</Link> or{" "}
-          <Link href="/signup" className="underline">sign up</Link> to book an appointment.
-        </p>
-      )}
+        {session ? (
+          <AppointmentForm doctorId={doctor.id} />
+        ) : (
+          <p className="rounded-lg border p-4 text-sm">
+            <Link href={`/login?next=/doctors/${doctor.id}`} className="underline">Log in</Link> or{" "}
+            <Link href="/signup" className="underline">sign up</Link> to book an appointment.
+          </p>
+        )}</Suspense>
     </main>
   );
 }
+

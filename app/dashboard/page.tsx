@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { AppointmentForm } from "@/app/appointmentForm";
+import { Suspense } from "react";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -12,6 +13,7 @@ export default async function DashboardPage() {
     select: { name: true, role: true },
   });
   if (!user) redirect("/login");
+  if (user.role === "DOCTOR") redirect("/doctor");
 
   if (user.role !== "PATIENT") {
     if (!["STAFF", "ADMIN"].includes(user.role)) redirect("/");
@@ -47,7 +49,9 @@ export default async function DashboardPage() {
   ]);
 
   return (
+    
     <main className="mx-auto w-full max-w-3xl space-y-8 p-6">
+    <Suspense>
       <header>
         <h1 className="text-2xl font-semibold">Welcome, {user.name}</h1>
         <p className="text-sm text-muted-foreground">Book an appointment with an available doctor.</p>
@@ -90,6 +94,11 @@ export default async function DashboardPage() {
           </ul>
         )}
       </section>
+      </Suspense>
     </main>
   );
+}
+
+async function DashboardContent() {
+  const session = await getSession()
 }

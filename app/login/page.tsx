@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -13,7 +14,7 @@ import {
 import { useForm } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 
@@ -22,8 +23,17 @@ type LoginFormValues = {
   password: string
 }
 
-export function Login() {
+export default function Login() {
+  return (
+    <Suspense fallback={<main className="flex min-h-[calc(100svh-4.5rem)] items-center justify-center p-4">Loading...</main>}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
+  const params = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const {
     register,
@@ -46,7 +56,10 @@ export function Login() {
         return
       }
 
-      router.push("/dashboard")
+      const roleHome: Record<string, string> = { ADMIN: "/dashboard", STAFF: "/dashboard", DOCTOR: "/doctor", PATIENT: "/dashboard" }
+      const next = params.get("next")
+      const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null
+      router.push(safeNext ?? roleHome[result.user.role] ?? "/")
       router.refresh()
     } catch {
       setError("root", { message: "Something went wrong. Please try again." })
@@ -137,5 +150,3 @@ export function Login() {
     </main>
   )
 }
-
-export default Login
