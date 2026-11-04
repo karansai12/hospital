@@ -1,50 +1,73 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { AppointmentForm } from "@/app/appointmentForm";
+import { istDateString } from "@/lib/slots";
 
-export default function DoctorPage({ params }: { params: Promise<{ id: string }> }) {
+export default function DoctorHomePage() {
   return (
     <Suspense fallback={<main className="p-8">Loading...</main>}>
-      <DoctorContent params={params} />
+      <DoctorHome />
     </Suspense>
   );
 }
 
-async function DoctorContent({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-
-  const doctor = await prisma.doctor.findFirst({
-    where: { id, isActive: true, hospital: { status: "APPROVED" } },
-    include: { hospital: true, specialties: true },
-  });
-  if (!doctor) notFound();
-
+async function DoctorHome() {
   const session = await getSession();
+  if (!session) redirect("/login?next=/doctor");
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { name: true, role: true, doctorProfile: { select: { id: true, name: true } } },
+  });
+  if (!user || user.role !== "DOCTOR") redirect("/");
+
+  if (!user.doctorProfile) {
+    return (
+      <main className="mx-auto max-w-xl p-6">
+        <h1 className="text-2xl font-semibold">Welcome, {user.name}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Your account is not linked to a doctor profile yet. Ask your hospital to link it.
+        </p>
+      </main>
+    );
+  }
+
+  const startOfToday = new Date(`${istDateString(new Date())}T00:00:00+05:30`);
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      doctorId: user.doctorProfile.id,
+      status: { not: "CANCELLED" },
+      slotStart: { gte: startOfToday },
+    },
+    include: { patient: { select: { name: true } } },
+    orderBy: { slotStart: "asc" },
+  });
+
+  const fmt = (d: Date) =>
+    d.toLocaleString("en-IN", {
+      weekday: "short", day: "numeric", month: "short",
+      hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata",
+    });
 
   return (
-    <main className="mx-auto max-w-xl space-y-6 p-6">
-      <Suspense>
-        <div>
-          <h1 className="text-2xl font-semibold">{doctor.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {doctor.specialties.map((s) => s.name).join(", ")}
-            {doctor.qualification ? ` · ${doctor.qualification}` : ""}
-          </p>
-          <p className="text-sm">{doctor.hospital.name}, {doctor.hospital.city}</p>
-        </div>
+    <main className="mx-auto max-w-xl space-y-4 p-6">
+      <div>
+        <h1 className="text-2xl font-semibold">{user.doctorProfile.name}</h1>
+        <p className="text-sm text-muted-foreground">Your upcoming appointments</p>
+      </div>
 
-        {session ? (
-          <AppointmentForm doctorId={doctor.id} />
-        ) : (
-          <p className="rounded-lg border p-4 text-sm">
-            <Link href={`/login?next=/doctors/${doctor.id}`} className="underline">Log in</Link> or{" "}
-            <Link href="/signup" className="underline">sign up</Link> to book an appointment.
-          </p>
-        )}</Suspense>
+      {appointments.length === 0 ? (
+        <p className="rounded-lg border p-4 text-sm text-muted-foreground">No upcoming appointments.</p>
+      ) : (
+        appointments.map((a) => (
+          <div key={a.id} className="rounded-lg border p-4">
+            <p className="font-medium">{fmt(a.slotStart)}</p>
+            <p className="text-sm">{a.patient.name ?? "Patient"}</p>
+            {a.reason && <p className="text-sm text-muted-foreground">{a.reason}</p>}
+          </div>
+        ))
+      )}
     </main>
   );
 }
-
