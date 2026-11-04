@@ -55,7 +55,7 @@ export function AppointmentForm({
     setSubmitting(true);
     setError(null);
 
-    const res = await fetch("/api/auth/appointments", {
+    const res = await fetch("/api/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ doctorId: activeDoctorId, slotStart: selected, reason: reason || undefined }),
