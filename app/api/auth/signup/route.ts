@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
 
 
-const boadyschema = z.object({
+const bodySchema = z.object({
     name: z.string().trim().min(2, "Enter your name").max(80),
     email: z.string().trim().toLowerCase().email("Enter a valid email"),
     requestedRole: z.enum(["PATIENT", "DOCTOR", "STAFF"]).default("PATIENT"),
@@ -13,7 +14,7 @@ const boadyschema = z.object({
 })
 
 export async function POST(req:Request) {
-    const parsed = boadyschema.safeParse(await req.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
@@ -25,10 +26,18 @@ export async function POST(req:Request) {
   }
   const passwordHash = await bcrypt.hash(password, 12)
 
-  const user = await prisma.user.create({
-    data: { name, email, passwordHash, role: "PATIENT", requestedRole },
-    select:{id:true,name:true,email:true,role:true}
-  })
+  let user;
+  try {
+    user = await prisma.user.create({
+      data: { name, email, passwordHash, role: "PATIENT", requestedRole },
+      select:{id:true,name:true,email:true,role:true}
+    })
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+    }
+    throw e;
+  }
 
    await createSession(user.id, user.role);
   return NextResponse.json({ ok: true, user }, { status: 201 });
