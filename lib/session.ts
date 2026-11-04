@@ -1,6 +1,7 @@
 import {SignJWT,jwtVerify} from "jose"
 import { cookies } from "next/headers"
 
+if (!process.env.AUTH_SECRET) throw new Error("AUTH_SECRET is not set");
 
 const COOKIE_NAME = "session"
 const secret = ()=> new TextEncoder().encode(process.env.AUTH_SECRET)
