@@ -72,17 +72,30 @@ export function AppointmentForm({
     if (res.status === 409) loadSlots(date); // refresh so the taken slot disappears
   }
 
+  function resetForm() {
+    setBooked(null);
+    setSelected(null);
+    setReason("");
+    setError(null);
+    loadSlots(date);
+  }
+
   if (booked) {
-    return (
-      <div className="rounded-lg border p-4">
+  return (
+    <div className="space-y-3 rounded-lg border p-4">
+      <div>
         <p className="font-medium">Appointment booked</p>
         <p className="text-sm text-muted-foreground">
           {new Date(booked).toLocaleDateString("en-IN", { dateStyle: "full", timeZone: "Asia/Kolkata" })} at{" "}
           {formatTime(booked)}
         </p>
       </div>
-    );
-  }
+      <Button type="button" variant="outline" size="sm" onClick={resetForm}>
+        Book another appointment
+      </Button>
+    </div>
+  );
+}
 
   return (
     <div className="space-y-4">
