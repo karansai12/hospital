@@ -39,6 +39,8 @@ model User {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   doctorProfile Doctor?
+
+  @@map("users")
 }
 
 model Hospital {
@@ -55,6 +57,7 @@ model Hospital {
   updatedAt DateTime       @updatedAt
 
   @@index([city])
+  @@map("hospitals")
 }
 
 model Doctor {
@@ -73,12 +76,15 @@ model Doctor {
   user            User?         @relation(fields: [userId], references: [id])
 
   @@index([hospitalId])
+  @@map("doctors")
 }
 
 model Specialty {
   id      String   @id @default(uuid())
   name    String   @unique
   doctors Doctor[]
+
+  @@map("specialties")
 }
 
 model Appointment {
@@ -96,4 +102,5 @@ model Appointment {
 
   @@index([patientId])
   @@index([doctorId, slotStart])
+  @@map("appointments")
 }

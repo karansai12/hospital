@@ -90,7 +90,7 @@ export function AppointmentForm({
           {formatTime(booked)}
         </p>
       </div>
-      <Button type="button" variant="outline" size="sm" onClick={resetForm}>
+      <Button type="button" variant="outline" size="sm" onClick={resetForm} className="bg-blue-900 text-white hover:bg-blue-200">
         Book another appointment
       </Button>
     </div>
