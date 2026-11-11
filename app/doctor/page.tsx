@@ -58,7 +58,7 @@ async function DoctorHome() {
       </div>
 
       {appointments.length === 0 ? (
-        <p className="rounded-lg border p-4 text-sm text-muted-foreground">No upcoming appointments.</p>
+        <p className="rounded-lg border p-4 text-sm text-muted-foreground">No appointments at the moment.</p>
       ) : (
         appointments.map((a) => (
           <div key={a.id} className="rounded-lg border p-4">

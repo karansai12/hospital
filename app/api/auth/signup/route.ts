@@ -10,6 +10,7 @@ const bodySchema = z.object({
     name: z.string().trim().min(2, "Enter your name").max(80),
     email: z.string().trim().toLowerCase().email("Enter a valid email"),
     requestedRole: z.enum(["PATIENT", "DOCTOR", "STAFF"]).default("PATIENT"),
+  hospitalId: z.string().min(1).optional(),
     password: z.string().min(8, "Password must be at least 8 characters").max(72),
 })
 
@@ -18,7 +19,21 @@ export async function POST(req:Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
-  const {email,password,name,requestedRole} = parsed.data
+  const { email, password, name, requestedRole, hospitalId } = parsed.data
+
+  if (requestedRole === "DOCTOR" && !hospitalId) {
+    return NextResponse.json({ error: "Choose a hospital for your doctor profile" }, { status: 400 });
+  }
+
+  const hospital = requestedRole === "DOCTOR" && hospitalId
+    ? await prisma.hospital.findFirst({
+        where: { id: hospitalId, status: "APPROVED" },
+        select: { id: true },
+      })
+    : null;
+  if (requestedRole === "DOCTOR" && !hospital) {
+    return NextResponse.json({ error: "Choose an approved hospital" }, { status: 400 });
+  }
 
   const existing = await prisma.user.findUnique({where:{email}})
   if(existing) {
@@ -29,7 +44,18 @@ export async function POST(req:Request) {
   let user;
   try {
     user = await prisma.user.create({
-      data: { name, email, passwordHash, role: "PATIENT", requestedRole },
+      data: {
+        name,
+        email,
+        passwordHash,
+        role: requestedRole === "DOCTOR" ? "DOCTOR" : "PATIENT",
+        requestedRole: requestedRole === "DOCTOR" ? null : requestedRole,
+        ...(hospital && {
+          doctorProfile: {
+            create: { name, hospitalId: hospital.id },
+          },
+        }),
+      },
       select:{id:true,name:true,email:true,role:true}
     })
   } catch (e) {

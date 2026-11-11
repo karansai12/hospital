@@ -10,31 +10,54 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 
 type SignupFormValues = {
     name: string
     email: string
     requestedRole: "PATIENT" | "DOCTOR" | "STAFF"
+    hospitalId?: string
     password: string
     confirmPassword: string
 }
 
+type HospitalOption = { id: string; name: string; city: string }
+
 export function Signup() {
     const router = useRouter()
     const [showPassword, setShowPassword] = useState(false)
+    const [hospitals, setHospitals] = useState<HospitalOption[]>([])
+    const [hospitalLoadError, setHospitalLoadError] = useState<string | null>(null)
     const {
         register,
         handleSubmit,
         setError,
         getValues,
+        control,
         formState: { errors, isSubmitting },
-    } = useForm<SignupFormValues>()
+    } = useForm<SignupFormValues>({ shouldUnregister: true })
+    const requestedRole = useWatch({ control, name: "requestedRole", defaultValue: "PATIENT" })
+
+    useEffect(() => {
+        let cancelled = false
+        fetch("/api/hospitals")
+            .then(async (response) => {
+                if (!response.ok) throw new Error("Unable to load hospitals")
+                return response.json()
+            })
+            .then((result) => {
+                if (!cancelled) setHospitals(result.hospitals)
+            })
+            .catch(() => {
+                if (!cancelled) setHospitalLoadError("Unable to load approved hospitals. Please try again.")
+            })
+        return () => { cancelled = true }
+    }, [])
 
     async function onSubmit(values: SignupFormValues) {
         try {
@@ -45,6 +68,7 @@ export function Signup() {
                     name: values.name,
                     email: values.email,
                     requestedRole: values.requestedRole,
+                    hospitalId: values.requestedRole === "DOCTOR" ? values.hospitalId : undefined,
                     password: values.password,
                 }),
             })
@@ -55,7 +79,7 @@ export function Signup() {
                 return
             }
 
-            router.push( "/dashboard" )
+            router.push(result.user.role === "DOCTOR" ? "/doctor" : "/dashboard")
             router.refresh()
         } catch {
             setError("root", { message: "Something went wrong. Please try again." })
@@ -124,9 +148,34 @@ export function Signup() {
                                 <option value="DOCTOR">Doctor</option>
                                 <option value="STAFF">Staff</option>
                             </select>
-                            <p className="text-sm text-muted-foreground">Doctor and staff access requires approval.</p>
+                            <p className="text-sm text-muted-foreground">Staff access requires approval.</p>
                             {errors.requestedRole && <p className="text-sm text-destructive">{errors.requestedRole.message}</p>}
                         </div>
+                        {requestedRole === "DOCTOR" && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="hospital">Hospital</Label>
+                                <select
+                                    id="hospital"
+                                    className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                                    aria-invalid={Boolean(errors.hospitalId)}
+                                    {...register("hospitalId", {
+                                        required: "Choose a hospital for your doctor profile",
+                                    })}
+                                >
+                                    <option value="">Select an approved hospital</option>
+                                    {hospitals.map((hospital) => (
+                                        <option key={hospital.id} value={hospital.id}>
+                                            {hospital.name} · {hospital.city}
+                                        </option>
+                                    ))}
+                                </select>
+                                {hospitalLoadError && <p className="text-sm text-destructive">{hospitalLoadError}</p>}
+                                {hospitals.length === 0 && !hospitalLoadError && (
+                                    <p className="text-sm text-muted-foreground">No approved hospitals are available.</p>
+                                )}
+                                {errors.hospitalId && <p className="text-sm text-destructive">{errors.hospitalId.message}</p>}
+                            </div>
+                        )}
                         <div className="grid gap-2">
                             <Label htmlFor="password">Password</Label>
                             <div className="relative">
