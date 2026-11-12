@@ -18,10 +18,12 @@ export default async function Navbar() {
     <nav className="bg-gray-800 p-4 text-white">
       <div className="container mx-auto flex items-center justify-between">
         <Link href="/" className="text-xl font-bold">MyApp</Link>
+       
         <div className="flex items-center gap-4 text-sm">
           {user ? (
             <>
               <Link href={home} className="underline">{user.name ?? "My account"}</Link>
+               {user.role === "ADMIN" && <Link href="/admin/approvals" className="underline">Approvals</Link>}
               <LogoutButton />
             </>
           ) : (
