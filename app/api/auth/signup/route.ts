@@ -52,7 +52,7 @@ export async function POST(req:Request) {
         requestedRole: requestedRole === "DOCTOR" ? null : requestedRole,
         ...(hospital && {
           doctorProfile: {
-            create: { name, hospitalId: hospital.id },
+            create: { name, hospitalId: hospital.id, isActive: false },
           },
         }),
       },

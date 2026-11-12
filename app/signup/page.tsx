@@ -79,7 +79,7 @@ export function Signup() {
                 return
             }
 
-            router.push(result.user.role === "DOCTOR" ? "/doctor" : "/dashboard")
+            router.push("/dashboard")
             router.refresh()
         } catch {
             setError("root", { message: "Something went wrong. Please try again." })
