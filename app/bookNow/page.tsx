@@ -4,9 +4,17 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import { Suspense } from "react";
 
+export default function BookNow() {
+  return (
+    <Suspense fallback={<main className="p-8">Loading...</main>}>
+      <BookNowContent />
+    </Suspense>
+  );
+}
 
-export default async function BookNow() {
+async function BookNowContent() {
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -28,12 +36,13 @@ export default async function BookNow() {
     },
   });
 
-    return (
-        <main className="mx-auto w-full max-w-3xl space-y-8 p-6">
-          
-             <header>
+  return (
+    <main className="mx-auto w-full max-w-3xl space-y-8 p-6">
+      <header>
         <h1 className="text-2xl font-semibold">Welcome, {user.name}</h1>
-        <p className="text-sm text-muted-foreground">Book an appointment with an available doctor.</p>
+        <p className="text-sm text-muted-foreground">
+          Book an appointment with an available doctor.
+        </p>
       </header>
 
       <section className="space-y-4">
@@ -47,12 +56,14 @@ export default async function BookNow() {
             }))}
           />
         ) : (
-          <p className="text-sm text-muted-foreground">No approved doctors are currently available.</p>
+          <p className="text-sm text-muted-foreground">
+            No approved doctors are currently available.
+          </p>
         )}
       </section>
       <Link href="/dashboard" className={buttonVariants()}>
-      Your appointments
+        Your appointments
       </Link>
-        </main>
-    )
+    </main>
+  );
 }

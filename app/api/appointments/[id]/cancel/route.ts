@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole, authErrorResponse } from "@/lib/auth";
-import { CHANGE_CUTOFF_MS } from "@/lib/appoinmentRules";
+import { CHANGE_CUTOFF_MS } from "@/lib/appoinment-rules";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   let user;
