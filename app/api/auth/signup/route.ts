@@ -48,8 +48,8 @@ export async function POST(req:Request) {
         name,
         email,
         passwordHash,
-        role: requestedRole === "DOCTOR" ? "DOCTOR" : "PATIENT",
-        requestedRole: requestedRole === "DOCTOR" ? null : requestedRole,
+        role: "PATIENT",
+        requestedRole: requestedRole === "PATIENT" ? null : requestedRole,
         ...(hospital && {
           doctorProfile: {
             create: { name, hospitalId: hospital.id, isActive: false },
